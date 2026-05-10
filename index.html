@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizShow Live</title>
+<meta name="theme-color" content="#0a0a0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuizShow">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --accent: #f5c518;
+    --accent2: #ff4d4d;
+    --text: #f0f0f0;
+    --muted: #888;
+    --green: #4caf50;
+    --red: #f44336;
+    --buzz: #ff9900;
+    --est: #7c3aed;
+    --est-light: #a78bfa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; }
+
+  /* ─── SETUP ─── */
+  #setup-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; gap: 1.5rem; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; letter-spacing: 0.1em; color: var(--accent); text-shadow: 0 0 40px rgba(245,197,24,0.4); line-height: 1; }
+  .logo span { color: var(--accent2); }
+  .card { background: var(--surface); border: 1px solid #2a2a3a; border-radius: 12px; padding: 2rem; width: 100%; max-width: 480px; }
+  .card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 1.2rem; }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; background: var(--surface2); border: 1px solid #2a2a3a; border-radius: 8px;
+    padding: 0.7rem 1rem; color: var(--text); font-family: 'Barlow', sans-serif;
+    font-size: 1rem; outline: none; transition: border-color 0.2s; margin-bottom: 1rem;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    display: inline-block; padding: 0.75rem 2rem; border: none; border-radius: 8px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.08em;
+    cursor: pointer; transition: transform 0.1s, filter 0.2s; width: 100%;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid #3a3a4a; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-buzz { background: var(--buzz); color: #000; font-size: 2rem; padding: 1.5rem; }
+  .btn-purple { background: var(--est); color: #fff; }
+  .btn-row { display: flex; gap: 0.6rem; }
+  .btn-row .btn { flex: 1; }
+
+  /* ─── TOPBAR ─── */
+  #game-screen { display: none; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.5rem; gap: 1rem; }
+  .topbar .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--accent); letter-spacing: 0.1em; white-space: nowrap; }
+  .topbar .room-badge { font-size: 0.75rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; }
+  .topbar .room-badge strong { color: var(--accent); font-size: 1.1rem; letter-spacing: 0.15em; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: blink2 2s infinite; }
+  @keyframes blink2 { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ─── LAYOUT ─── */
+  .main-area { flex: 1; display: grid; grid-template-columns: 1fr 280px; }
+  @media (max-width: 700px) { .main-area { grid-template-columns: 1fr; } }
+  .center-panel { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+
+  /* Question box */
+  .question-box { background: var(--surface); border: 2px solid #2a2a3a; border-radius: 12px; padding: 1.5rem; min-height: 90px; transition: border-color 0.3s; }
+  .question-box.est-mode { border-color: var(--est); }
+  .q-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+  .q-mode-badge { display: inline-block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; background: var(--est); color: #fff; margin-left: 0.5rem; vertical-align: middle; }
+  .q-text { font-size: 1.3rem; font-weight: 700; line-height: 1.4; color: var(--text); }
+
+  /* Host controls */
+  .host-controls { background: var(--surface); border: 1px solid #2a2a3a; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+  .host-controls h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--accent); letter-spacing: 0.05em; }
+  .host-controls textarea { margin-bottom: 0; }
+
+  /* Q type toggle */
+  .q-type-toggle { display: flex; gap: 0.5rem; }
+  .q-type-btn { flex: 1; padding: 0.5rem; border: 2px solid #2a2a3a; border-radius: 8px; background: var(--surface2); color: var(--muted); cursor: pointer; font-family: 'Barlow', sans-serif; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; text-align: center; }
+  .q-type-btn.active-buzz { border-color: var(--buzz); color: var(--buzz); background: rgba(255,153,0,0.08); }
+  .q-type-btn.active-est { border-color: var(--est-light); color: var(--est-light); background: rgba(124,58,237,0.1); }
+
+  .points-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .points-row label { margin: 0; white-space: nowrap; }
+  .points-row input { width: 70px; margin: 0; }
+  .section-sep { border: none; border-top: 1px solid #2a2a3a; margin: 0.2rem 0; }
+
+  /* Buzz status */
+  .buzz-status { background: var(--surface); border: 2px solid var(--buzz); border-radius: 12px; padding: 1.2rem; text-align: center; display: none; }
+  .buzz-status.active { display: block; animation: pulseBox 1s ease-in-out infinite; }
+  @keyframes pulseBox { 0%,100%{box-shadow:0 0 0 0 rgba(255,153,0,0.4)} 50%{box-shadow:0 0 0 12px rgba(255,153,0,0)} }
+  .buzz-status .buzz-name { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--buzz); letter-spacing: 0.05em; line-height: 1; }
+  .buzz-status .buzz-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+  .judge-row { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+  .judge-row .btn { flex: 1; }
+
+  /* Estimate panel host */
+  .estimate-panel { background: var(--surface); border: 2px solid var(--est); border-radius: 12px; padding: 1.2rem; display: none; flex-direction: column; gap: 0.8rem; }
+  .estimate-panel.active { display: flex; }
+  .estimate-panel h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--est-light); letter-spacing: 0.05em; }
+  .est-count { font-size: 0.85rem; color: var(--muted); }
+  .est-count span { color: var(--accent); font-weight: 700; }
+  .est-correct-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .est-correct-row label { margin: 0; white-space: nowrap; }
+  .estimate-answers-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 320px; overflow-y: auto; }
+  .est-answer-row { background: var(--surface2); border: 2px solid transparent; border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.8rem; transition: border-color 0.2s, background 0.2s; cursor: pointer; user-select: none; }
+  .est-answer-row:hover { border-color: var(--est-light); background: rgba(124,58,237,0.08); }
+  .est-answer-row.selected { border-color: var(--est-light); background: rgba(124,58,237,0.15); }
+  .est-answer-row.winner { border-color: var(--green); background: rgba(76,175,80,0.12); }
+  .est-answer-row.winner .est-answer-name::after { content: ' 🏆'; }
+  .est-answer-name { font-weight: 700; min-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .est-answer-val { font-size: 1rem; color: var(--est-light); margin-right: auto; font-weight: 600; word-break: break-word; }
+  .est-select-hint { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+  .est-waiting { color: var(--muted); font-style: italic; font-size: 0.9rem; text-align: center; padding: 1rem 0; }
+
+  /* Scoreboard */
+  .scoreboard { background: var(--surface); border-left: 2px solid #1a1a26; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; }
+  .scoreboard h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--accent); letter-spacing: 0.1em; border-bottom: 1px solid #2a2a3a; padding-bottom: 0.5rem; margin-bottom: 0.3rem; }
+  .player-row { background: var(--surface2); border-radius: 8px; padding: 0.6rem 0.8rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; border: 1px solid transparent; transition: background 0.3s; }
+  .player-row.buzzed { background: rgba(255,153,0,0.15); border-color: var(--buzz); }
+  .player-name { font-weight: 600; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .player-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--accent); min-width: 40px; text-align: right; }
+  .buzz-indicator { width: 10px; height: 10px; border-radius: 50%; background: var(--buzz); flex-shrink: 0; opacity: 0; }
+  .player-row.buzzed .buzz-indicator { opacity: 1; animation: blinkDot 0.5s ease-in-out infinite; }
+  @keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .manual-adj { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .manual-adj select, .kick-wrap select { flex: 1; margin: 0; }
+  .manual-adj input { width: 70px; margin: 0; }
+  .manual-adj .btn, .kick-wrap .btn { flex: 0 0 auto; width: auto; padding: 0.6rem 1rem; font-size: 1rem; }
+  .kick-wrap { display: flex; gap: 0.5rem; align-items: center; }
+
+  /* ─── PLAYER SCREEN ─── */
+  #player-screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; gap: 1.5rem; text-align: center; }
+  .player-name-display { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--muted); letter-spacing: 0.1em; }
+  .player-name-display span { color: var(--accent); }
+  .player-score-display { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: var(--accent); line-height: 1; }
+  .score-label { font-family: 'Barlow', sans-serif; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .player-question-box { background: var(--surface); border: 2px solid #2a2a3a; border-radius: 16px; padding: 2rem; max-width: 600px; width: 100%; transition: border-color 0.3s; }
+  .player-question-box.est-mode { border-color: var(--est); }
+  .waiting { color: var(--muted); font-size: 1.1rem; font-style: italic; }
+  .pq-text { font-size: 1.4rem; font-weight: 700; line-height: 1.5; }
+  .pq-est-label { font-size: 0.75rem; color: var(--est-light); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; }
+
+  .est-input-area { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; margin-top: 1.2rem; }
+  .est-input-area input[type="text"] { max-width: 320px; font-size: 1.3rem; text-align: center; font-weight: 600; margin: 0; }
+  .est-input-area .btn { max-width: 240px; }
+  .est-submitted { color: var(--est-light); font-weight: 600; font-size: 1rem; padding: 0.6rem 1rem; border: 1px solid var(--est); border-radius: 8px; background: rgba(124,58,237,0.08); }
+  .est-reveal { background: rgba(124,58,237,0.08); border: 1px solid var(--est); border-radius: 10px; padding: 1.2rem; margin-top: 0.8rem; }
+  .est-reveal .your-val-big { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--est-light); line-height: 1; }
+  .est-reveal .correct-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; }
+  .est-reveal .result-win { color: var(--green); font-size: 1.2rem; font-weight: 700; margin-top: 0.6rem; }
+  .est-reveal .result-lose { color: var(--muted); font-size: 1rem; margin-top: 0.6rem; }
+
+  .buzz-btn-wrap { width: 100%; max-width: 400px; }
+  .btn-buzz { border-radius: 16px; animation: glowBuzz 2s ease-in-out infinite; }
+  @keyframes glowBuzz { 0%,100%{box-shadow:0 0 12px rgba(255,153,0,0.3)} 50%{box-shadow:0 0 30px rgba(255,153,0,0.7)} }
+  .btn-buzz:disabled { background: #333; color: #666; animation: none; cursor: not-allowed; box-shadow: none; }
+  .buzz-result { font-size: 1.1rem; font-weight: 600; padding: 0.6rem 1.5rem; border-radius: 8px; display: none; }
+  .buzz-result.you-buzzed { display: block; background: rgba(255,153,0,0.15); color: var(--buzz); border: 1px solid var(--buzz); }
+  .buzz-result.someone-else { display: block; background: rgba(100,100,100,0.1); color: var(--muted); border: 1px solid #333; }
+
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 0.8rem 1.5rem; font-weight: 600; transition: transform 0.3s; z-index: 999; pointer-events: none; max-width: 90vw; text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── RESPONSIVE MOBILE ─── */
+  @media (max-width: 600px) {
+    .logo { font-size: 3.5rem; }
+    .card { padding: 1.4rem; }
+    .card h2 { font-size: 1.3rem; }
+
+    /* Topbar */
+    .topbar { padding: 0.5rem 1rem; }
+    .topbar .brand { font-size: 1.4rem; }
+    .topbar .room-badge strong { font-size: 0.95rem; }
+
+    /* Host layout: stack scoreboard below */
+    .main-area { grid-template-columns: 1fr; }
+    .scoreboard { border-left: none; border-top: 2px solid #1a1a26; max-height: 220px; }
+
+    /* Center panel */
+    .center-panel { padding: 0.9rem; gap: 0.8rem; }
+    .question-box { padding: 1rem; }
+    .q-text { font-size: 1.1rem; }
+
+    /* Host controls */
+    .host-controls { padding: 1rem; gap: 0.6rem; }
+    .points-row { gap: 0.4rem; }
+    .points-row input { width: 60px; }
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { font-size: 1rem; padding: 0.65rem 1rem; }
+    .judge-row { flex-direction: column; }
+    .buzz-status .buzz-name { font-size: 2rem; }
+
+    /* Estimate panel */
+    .estimate-answers-list { max-height: 200px; }
+    .est-answer-val { font-size: 0.95rem; }
+
+    /* Player screen */
+    #player-screen { padding: 1.2rem; gap: 1rem; justify-content: flex-start; padding-top: 2rem; }
+    .player-score-display { font-size: 3rem; }
+    .player-question-box { padding: 1.2rem; border-radius: 12px; }
+    .pq-text { font-size: 1.2rem; }
+    .btn-buzz { font-size: 1.6rem; padding: 1.2rem; }
+    .buzz-btn-wrap { max-width: 100%; }
+    .est-input-area input[type="text"] { font-size: 1.1rem; max-width: 100%; }
+
+    /* Scrollable host game */
+    #game-screen { overflow-y: auto; }
+    .main-area { overflow-y: visible; }
+  }
+
+  @media (max-width: 380px) {
+    .logo { font-size: 2.8rem; }
+    .btn { font-size: 1rem; padding: 0.65rem 1rem; }
+    .topbar .brand { font-size: 1.2rem; }
+  }
+
+  /* Safe area for notched phones */
+  @supports (padding: env(safe-area-inset-bottom)) {
+    #player-screen { padding-bottom: calc(1.2rem + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SETUP ══════════════════ -->
+<div id="setup-screen">
+  <div class="logo">Quiz<span>Show</span></div>
+
+  <div class="card" id="fb-config-card">
+    <h2>🔧 Firebase Setup</h2>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem;">
+      Kostenloses Firebase-Projekt nötig.<br>
+      <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent);">console.firebase.google.com</a>
+      → Realtime Database (Testmodus) → Projekteinstellungen → Web-App.
+    </p>
+    <label>API Key</label>
+    <input type="text" id="fb-apiKey" placeholder="AIzaSy..." />
+    <label>Auth Domain</label>
+    <input type="text" id="fb-authDomain" placeholder="xxx.firebaseapp.com" />
+    <label>Database URL</label>
+    <input type="text" id="fb-dbUrl" placeholder="https://xxx.firebaseio.com" />
+    <label>Project ID</label>
+    <input type="text" id="fb-projectId" placeholder="mein-quiz-projekt" />
+    <button class="btn btn-primary" onclick="initFirebase()">Verbinden</button>
+  </div>
+
+  <div class="card" id="role-card" style="display:none;">
+    <h2>👤 Wer bist du?</h2>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="showHostSetup()">🎤 Moderator</button>
+      <button class="btn btn-secondary" onclick="showPlayerSetup()">🙋 Mitspieler</button>
+    </div>
+  </div>
+
+  <div class="card" id="host-setup-card" style="display:none;">
+    <h2>🎤 Neue Show erstellen</h2>
+    <label>Dein Name (Moderator)</label>
+    <input type="text" id="host-name" placeholder="z.B. Max" />
+    <label>Punkte – Buzzer richtig</label>
+    <input type="number" id="pts-correct" value="3" min="1" />
+    <label>Punkte – Buzzer falsch (alle anderen)</label>
+    <input type="number" id="pts-wrong" value="1" min="0" />
+    <label>Punkte – nächste Schätzung</label>
+    <input type="number" id="pts-estimate" value="3" min="1" />
+    <button class="btn btn-primary" onclick="createRoom()">Show starten 🚀</button>
+  </div>
+
+  <div class="card" id="player-setup-card" style="display:none;">
+    <h2>🙋 Mitspieler beitreten</h2>
+    <label>Dein Name</label>
+    <input type="text" id="player-name-input" placeholder="z.B. Lisa" />
+    <label>Raum-Code</label>
+    <input type="text" id="room-code-input" placeholder="XXXX" style="text-transform:uppercase;letter-spacing:0.2em;" />
+    <button class="btn btn-secondary" onclick="joinRoom()">Beitreten ✌️</button>
+  </div>
+</div>
+
+<!-- ══════════════════ HOST GAME ══════════════════ -->
+<div id="game-screen">
+  <div class="topbar">
+    <div class="brand">QuizShow Live</div>
+    <div class="room-badge"><span>RAUM-CODE</span><strong id="display-room-code">----</strong></div>
+    <div style="font-size:0.8rem;color:var(--muted);"><span class="status-dot"></span>Live</div>
+  </div>
+
+  <div class="main-area">
+    <div class="center-panel">
+
+      <!-- Current question display -->
+      <div class="question-box" id="host-question-box">
+        <div class="q-label">Aktuelle Frage</div>
+        <div class="q-text" id="current-question-display"><span style="color:var(--muted);font-style:italic;">Noch keine Frage gestellt.</span></div>
+      </div>
+
+      <!-- Buzz status box -->
+      <div class="buzz-status" id="buzz-status-box">
+        <div class="buzz-label">🔔 Hat gebuzzert!</div>
+        <div class="buzz-name" id="buzz-player-name">---</div>
+        <div class="judge-row">
+          <button class="btn btn-green" onclick="judgeAnswer(true)">✅ Richtig</button>
+          <button class="btn btn-red" onclick="judgeAnswer(false)">❌ Falsch</button>
+          <button class="btn btn-secondary" onclick="clearBuzz()">🔄 Reset</button>
+        </div>
+      </div>
+
+      <!-- Estimate panel -->
+      <div class="estimate-panel" id="estimate-panel">
+        <h3>🔢 Schätzfrage – Auswertung</h3>
+        <div class="est-count">Antworten eingegangen: <span id="est-count-num">0</span> / <span id="est-count-total">0</span></div>
+        <div class="est-select-hint">Klicke auf Antworten um Gewinner auszuwählen (Mehrfachauswahl möglich)</div>
+
+        <div class="estimate-answers-list" id="estimate-answers-list">
+          <div class="est-waiting">Warte auf Antworten der Spieler...</div>
+        </div>
+
+        <div class="btn-row" id="est-award-row">
+          <button class="btn btn-green" onclick="awardEstimate()">✅ Ausgewählten Punkte vergeben &amp; beenden</button>
+          <button class="btn btn-secondary" onclick="closeEstimate()">Beenden (ohne Punkte)</button>
+        </div>
+      </div>
+
+      <!-- Host controls -->
+      <div class="host-controls">
+        <h3>🎤 Moderator-Controls</h3>
+
+        <div class="q-type-toggle">
+          <div class="q-type-btn active-buzz" id="type-buzz-btn" onclick="setQType('buzz')">⚡ Buzzer-Frage</div>
+          <div class="q-type-btn" id="type-est-btn" onclick="setQType('estimate')">🔢 Schätzfrage</div>
+        </div>
+
+        <label>Frage</label>
+        <textarea id="new-question" placeholder="Frage eingeben..."></textarea>
+
+        <div class="points-row" id="buzz-pts-row">
+          <label>✅ Richtig:</label>
+          <input type="number" id="pts-correct-game" value="3" min="1" />
+          <label style="margin-left:0.8rem;">❌ Falsch (alle anderen):</label>
+          <input type="number" id="pts-wrong-game" value="1" min="0" />
+        </div>
+        <div class="points-row" id="est-pts-row" style="display:none;">
+          <label>🏆 Punkte nächste Schätzung:</label>
+          <input type="number" id="pts-estimate-game" value="3" min="1" />
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="sendQuestion(false)">Vorbereiten (versteckt)</button>
+          <button class="btn btn-primary" onclick="sendQuestion(true)">Freigeben 👁️</button>
+        </div>
+
+        <hr class="section-sep" />
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;">Punkte manuell anpassen</div>
+        <div class="manual-adj">
+          <select id="adj-player"></select>
+          <input type="number" id="adj-pts" value="1" />
+          <button class="btn btn-green" onclick="adjustPoints(1)">+</button>
+          <button class="btn btn-red" onclick="adjustPoints(-1)">−</button>
+        </div>
+
+        <hr class="section-sep" />
+        <div style="font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;">Spieler entfernen</div>
+        <div class="kick-wrap">
+          <select id="kick-player"></select>
+          <button class="btn btn-red" onclick="kickPlayer()">Kick</button>
+        </div>
+
+        <hr class="section-sep" />
+        <button class="btn btn-secondary" onclick="resetAllScores()">🔄 Alle Punkte zurücksetzen</button>
+      </div>
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+      <h3>🏆 Punkte</h3>
+      <div id="scoreboard-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PLAYER SCREEN ══════════════════ -->
+<div id="player-screen">
+  <div class="player-name-display">Spieler: <span id="player-name-show">---</span></div>
+
+  <div>
+    <div class="player-score-display" id="player-score-show">0</div>
+    <div class="score-label">Punkte</div>
+  </div>
+
+  <div class="player-question-box" id="player-question-box">
+    <div class="waiting" id="player-waiting-msg">Warte auf den Moderator...</div>
+
+    <!-- Buzz area -->
+    <div id="player-buzz-area" style="display:none;">
+      <div class="pq-text" id="player-question-text"></div>
+    </div>
+
+    <!-- Estimate area -->
+    <div id="player-est-area" style="display:none;">
+      <div class="pq-est-label">🔢 Schätzfrage</div>
+      <div class="pq-text" id="player-est-q-text"></div>
+
+      <div class="est-input-area" id="est-input-area">
+        <input type="text" id="player-est-input" placeholder="Deine Antwort..." />
+        <button class="btn btn-purple" onclick="submitEstimate()">Antwort abschicken ✈️</button>
+      </div>
+
+      <div class="est-submitted" id="est-submitted-msg" style="display:none;">
+        ✅ Antwort eingegangen – warte auf Auswertung!
+      </div>
+
+      <div class="est-reveal" id="est-reveal" style="display:none;">
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Deine Schätzung</div>
+        <div class="your-val-big" id="reveal-your-val">—</div>
+        <div class="correct-label" id="reveal-correct-label"></div>
+        <div id="reveal-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="buzz-result" id="buzz-result-msg"></div>
+
+  <div class="buzz-btn-wrap" id="buzz-btn-wrap">
+    <button class="btn btn-buzz" id="buzz-btn" onclick="playerBuzz()" disabled>⚡ BUZZERN</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════ STATE ══════════════════════════
+let db = null, roomCode = null, myName = null, isHost = false;
+let myPlayerId = null;
+let currentBuzzerId = null, currentBuzzerName = null;
+let currentQuestion = null;
+let currentQType = 'buzz';
+let estimateAnswers = {};
+let estimateWinners = [];
+let lastPlayers = {};
+let playerHasSubmitted = false;
+
+// ══════════════════════════ FIREBASE ══════════════════════════
+function initFirebase() {
+  const apiKey    = document.getElementById('fb-apiKey').value.trim();
+  const authDomain= document.getElementById('fb-authDomain').value.trim();
+  const databaseURL=document.getElementById('fb-dbUrl').value.trim();
+  const projectId = document.getElementById('fb-projectId').value.trim();
+  if (!apiKey || !databaseURL) { showToast('Bitte API Key und Database URL eingeben!'); return; }
+  localStorage.setItem('fbConfig', JSON.stringify({apiKey,authDomain,databaseURL,projectId}));
+  try {
+    if (!firebase.apps.length) firebase.initializeApp({apiKey,authDomain,databaseURL,projectId});
+    db = firebase.database();
+    db.ref('.info/connected').on('value', s => { if(s.val()) showToast('✅ Firebase verbunden!'); });
+    document.getElementById('fb-config-card').style.display = 'none';
+    document.getElementById('role-card').style.display = 'block';
+  } catch(e) { showToast('Fehler: ' + e.message); }
+}
+
+// ══════════════════════════ ROOM ══════════════════════════
+function generateCode() { return Math.random().toString(36).substring(2,6).toUpperCase(); }
+
+async function createRoom() {
+  myName = document.getElementById('host-name').value.trim();
+  if (!myName) { showToast('Bitte Namen eingeben!'); return; }
+  roomCode = generateCode();
+  const ptsC = +document.getElementById('pts-correct').value || 3;
+  const ptsW = +document.getElementById('pts-wrong').value || 1;
+  const ptsE = +document.getElementById('pts-estimate').value || 3;
+  await db.ref(`rooms/${roomCode}`).set({
+    host: myName, ptsCorrect: ptsC, ptsWrong: ptsW, ptsEstimate: ptsE,
+    question: '', questionVisible: false, questionType: 'buzz',
+    buzzer: null, estimateOpen: false, estimateAnswers: null,
+    estimateCorrect: null, estimateWinners: null, players: {}
+  });
+  document.getElementById('pts-correct-game').value = ptsC;
+  document.getElementById('pts-wrong-game').value = ptsW;
+  document.getElementById('pts-estimate-game').value = ptsE;
+  isHost = true;
+  showGameScreen();
+}
+
+async function joinRoom() {
+  myName = document.getElementById('player-name-input').value.trim();
+  roomCode = document.getElementById('room-code-input').value.trim().toUpperCase();
+  if (!myName || !roomCode) { showToast('Bitte Namen und Raum-Code eingeben!'); return; }
+  const snap = await db.ref(`rooms/${roomCode}`).once('value');
+  if (!snap.exists()) { showToast('Raum nicht gefunden!'); return; }
+  myPlayerId = myName.replace(/\s+/g,'_') + '_' + Date.now();
+  await db.ref(`rooms/${roomCode}/players/${myPlayerId}`).set({ name: myName, score: 0 });
+  db.ref(`rooms/${roomCode}/players/${myPlayerId}`).onDisconnect().remove();
+  isHost = false;
+  showPlayerScreen();
+}
+
+// ══════════════════════════ HOST LOGIC ══════════════════════════
+function setQType(type) {
+  currentQType = type;
+  document.getElementById('type-buzz-btn').className = 'q-type-btn' + (type==='buzz' ? ' active-buzz' : '');
+  document.getElementById('type-est-btn').className  = 'q-type-btn' + (type==='estimate' ? ' active-est' : '');
+  document.getElementById('buzz-pts-row').style.display = type==='buzz' ? 'flex' : 'none';
+  document.getElementById('est-pts-row').style.display  = type==='estimate' ? 'flex' : 'none';
+}
+
+function showGameScreen() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
+  document.getElementById('display-room-code').textContent = roomCode;
+
+  db.ref(`rooms/${roomCode}/players`).on('value', snap => {
+    lastPlayers = snap.val() || {};
+    renderScoreboard(lastPlayers);
+    updatePlayerSelects(lastPlayers);
+    // update total count for estimate
+    document.getElementById('est-count-total').textContent = Object.keys(lastPlayers).length;
+  });
+
+  db.ref(`rooms/${roomCode}/buzzer`).on('value', snap => {
+    const buzz = snap.val();
+    if (buzz) {
+      currentBuzzerId = buzz.id; currentBuzzerName = buzz.name;
+      document.getElementById('buzz-player-name').textContent = buzz.name;
+      document.getElementById('buzz-status-box').classList.add('active');
+    } else {
+      currentBuzzerId = null; currentBuzzerName = null;
+      document.getElementById('buzz-status-box').classList.remove('active');
+    }
+    renderScoreboard(null);
+  });
+
+  db.ref(`rooms/${roomCode}`).on('value', snap => {
+    const room = snap.val(); if (!room) return;
+
+    // Question display
+    const qBox  = document.getElementById('current-question-display');
+    const hqBox = document.getElementById('host-question-box');
+    const badge = room.questionType === 'estimate' ? ' <span class="q-mode-badge">Schätzfrage</span>' : '';
+    if (room.question) {
+      if (room.questionVisible) {
+        qBox.innerHTML = escHtml(room.question) + badge;
+        hqBox.className = 'question-box' + (room.questionType==='estimate' ? ' est-mode' : '');
+      } else {
+        qBox.innerHTML = `<span style="color:var(--accent)">🔒 Bereit (versteckt)${badge}</span><br><span style="color:var(--muted);font-size:1rem;">${escHtml(room.question)}</span>`;
+        hqBox.className = 'question-box';
+      }
+    } else {
+      qBox.innerHTML = '<span style="color:var(--muted);font-style:italic;">Noch keine Frage gestellt.</span>';
+      hqBox.className = 'question-box';
+    }
+
+    // Estimate answers live update
+    if (room.estimateOpen || (room.estimateAnswers && !room.estimateOpen && room.question === '')) {
+      const panel = document.getElementById('estimate-panel');
+      if (room.estimateOpen) panel.classList.add('active');
+      estimateAnswers = room.estimateAnswers || {};
+      document.getElementById('est-count-num').textContent = Object.keys(estimateAnswers).length;
+      renderEstimateAnswers(false);
+    }
+  });
+}
+
+function sendQuestion(visible) {
+  const q = document.getElementById('new-question').value.trim();
+  if (!q) { showToast('Bitte Frage eingeben!'); return; }
+  currentQuestion = q;
+  const isEst = currentQType === 'estimate';
+
+  db.ref(`rooms/${roomCode}`).update({
+    question: q, questionVisible: visible, questionType: currentQType,
+    buzzer: null,
+    estimateOpen: visible && isEst,
+    estimateAnswers: null, estimateCorrect: null, estimateWinners: null
+  });
+
+  if (visible) {
+    if (isEst) {
+      estimateAnswers = {};
+      estimateWinners = [];
+      document.getElementById('estimate-panel').classList.add('active');
+      renderEstimateAnswers(false);
+      showToast('Schätzfrage freigegeben! Spieler können antworten.');
+    } else {
+      document.getElementById('estimate-panel').classList.remove('active');
+      showToast('Frage freigegeben! Buzzer aktiv.');
+    }
+  } else {
+    document.getElementById('estimate-panel').classList.remove('active');
+    showToast('Frage vorbereitet (versteckt).');
+  }
+}
+
+function renderEstimateAnswers(highlightWinners) {
+  const list = document.getElementById('estimate-answers-list');
+  const entries = Object.entries(estimateAnswers);
+  if (!entries.length) {
+    list.innerHTML = '<div class="est-waiting">Warte auf Antworten der Spieler...</div>';
+    return;
+  }
+  // Sort alphabetically by name
+  entries.sort((a,b) => a[1].name.localeCompare(b[1].name));
+  list.innerHTML = entries.map(([pid, ans]) => {
+    let cls = 'est-answer-row';
+    if (highlightWinners && estimateWinners.includes(pid)) cls += ' winner';
+    else if (!highlightWinners && estimateWinners.includes(pid)) cls += ' selected';
+    return `<div class="${cls}" onclick="toggleEstimateWinner('${pid}')" data-pid="${pid}">
+      <span class="est-answer-name">${escHtml(ans.name)}</span>
+      <span class="est-answer-val">${escHtml(String(ans.value))}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleEstimateWinner(pid) {
+  const idx = estimateWinners.indexOf(pid);
+  if (idx === -1) estimateWinners.push(pid);
+  else estimateWinners.splice(idx, 1);
+  renderEstimateAnswers(false);
+}
+
+async function awardEstimate() {
+  if (!estimateWinners.length) { showToast('Bitte mindestens eine Antwort auswählen!'); return; }
+  const pts = +document.getElementById('pts-estimate-game').value || 3;
+  const snap = await db.ref(`rooms/${roomCode}/players`).once('value');
+  const players = snap.val() || {};
+  const updates = {};
+  estimateWinners.forEach(pid => {
+    if (players[pid]) updates[`rooms/${roomCode}/players/${pid}/score`] = (players[pid].score||0) + pts;
+  });
+  if (Object.keys(updates).length) await db.ref().update(updates);
+
+  const names = estimateWinners.map(pid => estimateAnswers[pid]?.name || pid).join(', ');
+  showToast(`🏆 ${names} bekommt ${pts} Punkt(e)!`);
+
+  // Broadcast winners to players (no correct value needed)
+  await db.ref(`rooms/${roomCode}`).update({
+    estimateOpen: false,
+    estimateCorrect: null,
+    estimateWinners: estimateWinners,
+    question: '', questionVisible: false
+  });
+
+  document.getElementById('estimate-panel').classList.remove('active');
+  estimateWinners = [];
+}
+
+async function closeEstimate() {
+  await db.ref(`rooms/${roomCode}`).update({
+    estimateOpen: false, question: '', questionVisible: false,
+    estimateCorrect: null, estimateWinners: null
+  });
+  document.getElementById('estimate-panel').classList.remove('active');
+}
+
+async function judgeAnswer(correct) {
+  if (!currentBuzzerId) return;
+  const ptsC = +document.getElementById('pts-correct-game').value || 3;
+  const ptsW = +document.getElementById('pts-wrong-game').value || 1;
+  const snap = await db.ref(`rooms/${roomCode}/players`).once('value');
+  const players = snap.val() || {};
+  if (correct) {
+    const p = players[currentBuzzerId];
+    if (p) await db.ref(`rooms/${roomCode}/players/${currentBuzzerId}/score`).set((p.score||0)+ptsC);
+    showToast(`✅ ${currentBuzzerName} bekommt ${ptsC} Punkt(e)!`);
+  } else {
+    const updates = {};
+    for (const [pid,p] of Object.entries(players)) {
+      if (pid !== currentBuzzerId) updates[`rooms/${roomCode}/players/${pid}/score`] = (p.score||0)+ptsW;
+    }
+    if (Object.keys(updates).length) await db.ref().update(updates);
+    showToast(`❌ Falsch! Alle anderen bekommen ${ptsW} Punkt(e).`);
+  }
+  await db.ref(`rooms/${roomCode}`).update({
+    buzzer: null,
+    question: correct ? '' : currentQuestion,
+    questionVisible: !correct
+  });
+}
+
+function clearBuzz() { db.ref(`rooms/${roomCode}/buzzer`).set(null); }
+
+function renderScoreboard(players) {
+  if (players !== null) lastPlayers = players;
+  const list = document.getElementById('scoreboard-list');
+  const sorted = Object.entries(lastPlayers).sort((a,b) => (b[1].score||0)-(a[1].score||0));
+  list.innerHTML = sorted.map(([pid,p]) => `
+    <div class="player-row ${currentBuzzerId===pid?'buzzed':''}">
+      <div class="buzz-indicator"></div>
+      <div class="player-name">${escHtml(p.name)}</div>
+      <div class="player-score">${p.score||0}</div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem;">Noch keine Spieler</div>';
+}
+
+function updatePlayerSelects(players) {
+  const opts = Object.entries(players).map(([pid,p]) => `<option value="${pid}">${escHtml(p.name)}</option>`).join('');
+  ['adj-player','kick-player'].forEach(id => { document.getElementById(id).innerHTML = opts; });
+}
+
+async function adjustPoints(sign) {
+  const pid = document.getElementById('adj-player').value;
+  const pts = +document.getElementById('adj-pts').value || 1;
+  const snap = await db.ref(`rooms/${roomCode}/players/${pid}`).once('value');
+  const p = snap.val(); if (!p) return;
+  await db.ref(`rooms/${roomCode}/players/${pid}/score`).set(Math.max(0,(p.score||0)+sign*pts));
+  showToast(`${p.name}: ${sign>0?'+':''}${sign*pts} Punkte`);
+}
+
+async function kickPlayer() {
+  const pid = document.getElementById('kick-player').value;
+  const snap = await db.ref(`rooms/${roomCode}/players/${pid}`).once('value');
+  const p = snap.val(); if (!p) return;
+  await db.ref(`rooms/${roomCode}/players/${pid}`).remove();
+  showToast(`${p.name} entfernt.`);
+}
+
+async function resetAllScores() {
+  const snap = await db.ref(`rooms/${roomCode}/players`).once('value');
+  const updates = {};
+  Object.keys(snap.val()||{}).forEach(pid => updates[`rooms/${roomCode}/players/${pid}/score`] = 0);
+  await db.ref().update(updates);
+  showToast('Alle Punkte zurückgesetzt!');
+}
+
+// ══════════════════════════ PLAYER LOGIC ══════════════════════════
+function showPlayerScreen() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('player-screen').style.display = 'flex';
+  document.getElementById('player-name-show').textContent = myName;
+
+  db.ref(`rooms/${roomCode}`).on('value', snap => {
+    const room = snap.val(); if (!room) return;
+
+    const waitMsg   = document.getElementById('player-waiting-msg');
+    const buzzArea  = document.getElementById('player-buzz-area');
+    const estArea   = document.getElementById('player-est-area');
+    const buzzBtn   = document.getElementById('buzz-btn');
+    const buzzWrap  = document.getElementById('buzz-btn-wrap');
+    const pqBox     = document.getElementById('player-question-box');
+
+    if (room.questionVisible && room.question) {
+      waitMsg.style.display = 'none';
+
+      if (room.questionType === 'estimate') {
+        // ── ESTIMATE MODE ──
+        buzzArea.style.display = 'none';
+        estArea.style.display = 'block';
+        buzzWrap.style.display = 'none';
+        pqBox.className = 'player-question-box est-mode';
+        document.getElementById('player-est-q-text').textContent = room.question;
+
+        const inputArea   = document.getElementById('est-input-area');
+        const submittedEl = document.getElementById('est-submitted-msg');
+        const revealEl    = document.getElementById('est-reveal');
+
+        if (room.estimateOpen) {
+          revealEl.style.display = 'none';
+          if (playerHasSubmitted) {
+            inputArea.style.display = 'none';
+            submittedEl.style.display = 'block';
+          } else {
+            inputArea.style.display = 'flex';
+            submittedEl.style.display = 'none';
+          }
+        } else if (room.estimateWinners && !room.estimateOpen) {
+          // Show result
+          inputArea.style.display = 'none';
+          submittedEl.style.display = 'none';
+          revealEl.style.display = 'block';
+          const myAns = room.estimateAnswers && room.estimateAnswers[myPlayerId];
+          document.getElementById('reveal-your-val').textContent = myAns ? myAns.value : '—';
+          document.getElementById('reveal-correct-label').textContent = '';
+          const isWinner = room.estimateWinners.includes(myPlayerId);
+          const resEl = document.getElementById('reveal-result');
+          if (isWinner) {
+            resEl.innerHTML = '<div class="result-win">🏆 Richtig! Punkte erhalten!</div>';
+          } else {
+            resEl.innerHTML = `<div class="result-lose">${myAns ? 'Nicht ausgewählt.' : 'Keine Antwort abgegeben.'}</div>`;
+          }
+          playerHasSubmitted = false;
+        }
+
+      } else {
+        // ── BUZZ MODE ──
+        estArea.style.display = 'none';
+        buzzArea.style.display = 'block';
+        buzzWrap.style.display = 'block';
+        pqBox.className = 'player-question-box';
+        document.getElementById('player-question-text').textContent = room.question;
+        buzzBtn.disabled = !!room.buzzer;
+      }
+
+    } else if (room.question && !room.questionVisible) {
+      waitMsg.style.display = 'block';
+      waitMsg.textContent = '⏳ Frage wird vorbereitet...';
+      buzzArea.style.display = 'none';
+      estArea.style.display = 'none';
+      buzzWrap.style.display = 'block';
+      buzzBtn.disabled = true;
+      playerHasSubmitted = false;
+    } else {
+      waitMsg.style.display = 'block';
+      waitMsg.textContent = 'Warte auf den Moderator...';
+      buzzArea.style.display = 'none';
+      estArea.style.display = 'none';
+      buzzWrap.style.display = 'block';
+      buzzBtn.disabled = true;
+      pqBox.className = 'player-question-box';
+      playerHasSubmitted = false;
+    }
+
+    // Buzzer feedback
+    const buzzResult = document.getElementById('buzz-result-msg');
+    buzzResult.className = 'buzz-result';
+    if (room.questionType === 'buzz' && room.questionVisible && room.buzzer) {
+      if (room.buzzer.id === myPlayerId) {
+        buzzResult.textContent = '🔔 Du hast gebuzzert! Warte auf den Moderator.';
+        buzzResult.classList.add('you-buzzed');
+      } else {
+        buzzResult.textContent = `${room.buzzer.name} hat gebuzzert!`;
+        buzzResult.classList.add('someone-else');
+      }
+    }
+  });
+
+  db.ref(`rooms/${roomCode}/players/${myPlayerId}/score`).on('value', snap => {
+    document.getElementById('player-score-show').textContent = snap.val() || 0;
+  });
+}
+
+async function playerBuzz() {
+  const buzzBtn = document.getElementById('buzz-btn');
+  if (buzzBtn && buzzBtn.disabled) return;
+  const snap = await db.ref(`rooms/${roomCode}/buzzer`).once('value');
+  if (snap.val()) { showToast('Zu spät!'); return; }
+  await db.ref(`rooms/${roomCode}/buzzer`).set({ id: myPlayerId, name: myName, ts: Date.now() });
+}
+
+document.addEventListener('keydown', e => {
+  if (isHost) return;
+  if (e.code !== 'Space') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  e.preventDefault();
+  playerBuzz();
+});
+
+async function submitEstimate() {
+  const raw = document.getElementById('player-est-input').value.trim();
+  if (!raw) { showToast('Bitte eine Antwort eingeben!'); return; }
+
+  // Check if estimate is still open
+  const snap = await db.ref(`rooms/${roomCode}/estimateOpen`).once('value');
+  if (!snap.val()) { showToast('Eingabe nicht mehr möglich.'); return; }
+
+  await db.ref(`rooms/${roomCode}/estimateAnswers/${myPlayerId}`).set({
+    name: myName,
+    value: raw
+  });
+  playerHasSubmitted = true;
+  document.getElementById('est-input-area').style.display = 'none';
+  document.getElementById('est-submitted-msg').style.display = 'block';
+  showToast('✅ Antwort abgeschickt!');
+}
+
+// ══════════════════════════ HELPERS ══════════════════════════
+function showHostSetup()   { document.getElementById('role-card').style.display='none'; document.getElementById('host-setup-card').style.display='block'; }
+function showPlayerSetup() { document.getElementById('role-card').style.display='none'; document.getElementById('player-setup-card').style.display='block'; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('fbConfig');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      document.getElementById('fb-apiKey').value = c.apiKey||'';
+      document.getElementById('fb-authDomain').value = c.authDomain||'';
+      document.getElementById('fb-dbUrl').value = c.databaseURL||'';
+      document.getElementById('fb-projectId').value = c.projectId||'';
+    } catch(e) {}
+  }
+});
+</script>
+<script>
+// ── PWA: Register Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Inline service worker via blob so no separate file is needed
+    const swCode = `
+      const CACHE = 'quizshow-v1';
+      const ASSETS = [location.href];
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  });
+}
+
+// ── PWA: Install prompt ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install button if it exists
+  const btn = document.getElementById('install-btn');
+  if (btn) btn.style.display = 'block';
+});
+</script>
+</body>
+</html>
