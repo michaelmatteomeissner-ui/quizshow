@@ -29,6 +29,10 @@
     --buzz: #ff9900;
     --est: #7c3aed;
     --est-light: #a78bfa;
+    --timed: #00bcd4;
+    --timed-light: #80deea;
+    --mc: #e91e63;
+    --mc-light: #f48fb1;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -177,6 +181,78 @@
 
   .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 0.8rem 1.5rem; font-weight: 600; transition: transform 0.3s; z-index: 999; pointer-events: none; max-width: 90vw; text-align: center; }
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+
+  /* ─── TIMED MODE styles ─── */
+  .question-box.timed-mode { border-color: var(--timed); }
+  .question-box.mc-mode { border-color: var(--mc); }
+  .q-type-btn.active-timed { border-color: var(--timed-light); color: var(--timed-light); background: rgba(0,188,212,0.1); }
+  .q-type-btn.active-mc { border-color: var(--mc-light); color: var(--mc-light); background: rgba(233,30,99,0.1); }
+  .player-question-box.timed-mode { border-color: var(--timed); }
+  .player-question-box.mc-mode { border-color: var(--mc); }
+
+  /* Timed answers host panel */
+  .timed-panel { background: var(--surface); border: 2px solid var(--timed); border-radius: 12px; padding: 1.2rem; display: none; flex-direction: column; gap: 0.8rem; }
+  .timed-panel.active { display: flex; }
+  .timed-panel h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--timed-light); letter-spacing: 0.05em; }
+  .timed-answer-row { background: var(--surface2); border: 2px solid transparent; border-radius: 8px; padding: 0.65rem 1rem; display: flex; align-items: center; gap: 0.8rem; }
+  .timed-answer-row.correct { border-color: var(--green); background: rgba(76,175,80,0.1); }
+  .timed-answer-row.wrong { border-color: var(--red); background: rgba(244,67,54,0.08); opacity: 0.6; }
+  .timed-answer-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--timed-light); min-width: 30px; }
+  .timed-answer-name { font-weight: 700; flex: 1; }
+  .timed-answer-val { color: var(--muted); font-size: 0.85rem; margin-right: auto; }
+  .timed-answer-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--accent); }
+  .timed-pts-config { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+  .timed-pts-config input { width: 55px; margin: 0; font-size: 0.9rem; padding: 0.4rem 0.6rem; }
+  .timer-bar-wrap { background: var(--surface2); border-radius: 8px; height: 10px; overflow: hidden; }
+  .timer-bar { height: 100%; background: var(--timed); transition: width 1s linear, background 0.5s; border-radius: 8px; }
+  .timer-display { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--timed-light); text-align: center; }
+
+  /* Player timed */
+  .pq-timed-label { font-size: 0.75rem; color: var(--timed-light); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; }
+  .timed-input-area { display: flex; flex-direction: column; align-items: center; gap: 0.8rem; margin-top: 1.2rem; }
+  .timed-input-area input[type="text"] { max-width: 320px; font-size: 1.3rem; text-align: center; font-weight: 600; margin: 0; }
+  .timed-input-area .btn { max-width: 240px; background: var(--timed); color: #000; }
+  .timed-submitted { color: var(--timed-light); font-weight: 600; font-size: 1rem; padding: 0.6rem 1rem; border: 1px solid var(--timed); border-radius: 8px; background: rgba(0,188,212,0.08); }
+  .timed-reveal { background: rgba(0,188,212,0.08); border: 1px solid var(--timed); border-radius: 10px; padding: 1.2rem; margin-top: 0.8rem; }
+  .timed-reveal .your-timed-val { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--timed-light); }
+  .timed-reveal .result-win { color: var(--green); font-size: 1.2rem; font-weight: 700; margin-top: 0.5rem; }
+  .timed-reveal .result-lose { color: var(--muted); font-size: 1rem; margin-top: 0.5rem; }
+
+  /* MC mode */
+  .mc-panel { background: var(--surface); border: 2px solid var(--mc); border-radius: 12px; padding: 1.2rem; display: none; flex-direction: column; gap: 0.8rem; }
+  .mc-panel.active { display: flex; }
+  .mc-panel h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--mc-light); letter-spacing: 0.05em; }
+  .mc-options-input { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .mc-option-inp-wrap { display: flex; align-items: center; gap: 0.4rem; }
+  .mc-option-inp-wrap label { margin: 0; font-size: 0.9rem; color: var(--mc-light); font-weight: 700; min-width: 20px; text-transform: none; letter-spacing: 0; }
+  .mc-option-inp-wrap input { margin: 0; }
+  .mc-results-list { display: flex; flex-direction: column; gap: 0.4rem; max-height: 250px; overflow-y: auto; }
+  .mc-result-row { background: var(--surface2); border-radius: 8px; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.8rem; }
+  .mc-result-letter { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--mc-light); min-width: 28px; }
+  .mc-result-count { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--accent); margin-right: auto; }
+  .mc-result-names { font-size: 0.8rem; color: var(--muted); }
+  .mc-result-row.winner-opt { border: 2px solid var(--green); background: rgba(76,175,80,0.1); }
+  .mc-result-row.winner-opt .mc-result-letter { color: var(--green); }
+  .mc-count { font-size: 0.85rem; color: var(--muted); }
+  .mc-count span { color: var(--accent); font-weight: 700; }
+  .mc-judge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .mc-judge-btn { flex: 1; min-width: 60px; padding: 0.6rem 0.4rem; border: 2px solid #2a2a3a; border-radius: 8px; background: var(--surface2); color: var(--text); cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.05em; transition: all 0.2s; }
+  .mc-judge-btn:hover { border-color: var(--green); color: var(--green); }
+  .mc-judge-btn.selected-correct { border-color: var(--green); background: rgba(76,175,80,0.15); color: var(--green); }
+
+  /* Player MC */
+  .pq-mc-label { font-size: 0.75rem; color: var(--mc-light); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.8rem; }
+  .mc-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 1.2rem; }
+  .mc-choice-btn { padding: 1rem 0.5rem; border: 2px solid #2a2a3a; border-radius: 12px; background: var(--surface2); color: var(--text); cursor: pointer; font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 700; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .mc-choice-btn:hover:not(:disabled) { border-color: var(--mc-light); background: rgba(233,30,99,0.08); }
+  .mc-choice-btn.chosen { border-color: var(--mc-light); background: rgba(233,30,99,0.15); color: var(--mc-light); }
+  .mc-choice-btn.correct-reveal { border-color: var(--green); background: rgba(76,175,80,0.15); color: var(--green); }
+  .mc-choice-btn.wrong-reveal { border-color: var(--red); background: rgba(244,67,54,0.08); color: var(--muted); opacity: 0.6; }
+  .mc-choice-btn:disabled { cursor: not-allowed; }
+  .mc-choice-letter { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1; }
+  .mc-choice-text { font-size: 0.85rem; font-weight: 600; text-align: center; word-break: break-word; }
+  .mc-submitted { color: var(--mc-light); font-weight: 600; font-size: 1rem; padding: 0.6rem 1rem; border: 1px solid var(--mc); border-radius: 8px; background: rgba(233,30,99,0.08); margin-top: 0.8rem; }
 
   /* ─── RESPONSIVE MOBILE ─── */
   @media (max-width: 600px) {
@@ -337,13 +413,48 @@
         </div>
       </div>
 
+      <!-- Timed panel (host) -->
+      <div class="timed-panel" id="timed-panel">
+        <h3>⏱️ Auf Zeit – Auswertung</h3>
+        <div class="est-count">Antworten: <span id="timed-count-num">0</span> / <span id="timed-count-total">0</span></div>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="host-timer-bar" style="width:100%"></div></div>
+        <div class="timer-display" id="host-timer-display">--</div>
+        <div class="timed-answers-list" id="timed-answers-list" style="display:flex;flex-direction:column;gap:0.4rem;max-height:280px;overflow-y:auto;">
+          <div class="est-waiting">Warte auf Antworten...</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="awardTimed()">✅ Richtige markieren &amp; Punkte vergeben</button>
+          <button class="btn btn-secondary" onclick="closeTimed()">Beenden</button>
+        </div>
+      </div>
+
+      <!-- MC panel (host) -->
+      <div class="mc-panel" id="mc-panel">
+        <h3>🔤 A/B/C/D – Auswertung</h3>
+        <div class="mc-count">Antworten: <span id="mc-count-num">0</span> / <span id="mc-count-total">0</span></div>
+        <div class="mc-results-list" id="mc-results-list"></div>
+        <div style="font-size:0.85rem;color:var(--muted);margin-top:0.3rem;">Welche Antwort ist richtig?</div>
+        <div class="mc-judge-row" id="mc-judge-row">
+          <button class="mc-judge-btn" onclick="selectMcCorrect('A')">A</button>
+          <button class="mc-judge-btn" onclick="selectMcCorrect('B')">B</button>
+          <button class="mc-judge-btn" onclick="selectMcCorrect('C')">C</button>
+          <button class="mc-judge-btn" onclick="selectMcCorrect('D')">D</button>
+        </div>
+        <div class="btn-row" id="mc-award-row" style="display:none;">
+          <button class="btn btn-green" onclick="awardMc()">✅ Punkte vergeben &amp; beenden</button>
+          <button class="btn btn-secondary" onclick="closeMc()">Beenden (ohne Punkte)</button>
+        </div>
+      </div>
+
       <!-- Host controls -->
       <div class="host-controls">
         <h3>🎤 Moderator-Controls</h3>
 
-        <div class="q-type-toggle">
-          <div class="q-type-btn active-buzz" id="type-buzz-btn" onclick="setQType('buzz')">⚡ Buzzer-Frage</div>
-          <div class="q-type-btn" id="type-est-btn" onclick="setQType('estimate')">🔢 Schätzfrage</div>
+        <div class="q-type-toggle" style="flex-wrap:wrap;">
+          <div class="q-type-btn active-buzz" id="type-buzz-btn" onclick="setQType('buzz')">⚡ Buzzer</div>
+          <div class="q-type-btn" id="type-est-btn" onclick="setQType('estimate')">🔢 Schätzung</div>
+          <div class="q-type-btn" id="type-timed-btn" onclick="setQType('timed')">⏱️ Auf Zeit</div>
+          <div class="q-type-btn" id="type-mc-btn" onclick="setQType('mc')">🔤 A/B/C/D</div>
         </div>
 
         <label>Frage</label>
@@ -358,6 +469,28 @@
         <div class="points-row" id="est-pts-row" style="display:none;">
           <label>🏆 Punkte nächste Schätzung:</label>
           <input type="number" id="pts-estimate-game" value="3" min="1" />
+        </div>
+        <div id="timed-pts-row" style="display:none;">
+          <div class="timed-pts-config">
+            <span>Punkte Rang 1:</span><input type="number" id="pts-t1" value="5" min="1" />
+            <span>Rang 2:</span><input type="number" id="pts-t2" value="4" min="0" />
+            <span>Rang 3:</span><input type="number" id="pts-t3" value="3" min="0" />
+            <span>Rang 4+:</span><input type="number" id="pts-t4" value="1" min="0" />
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem;">Nur richtige Antworten bekommen Punkte. Zeitlimit (Sek):</div>
+          <input type="number" id="timed-limit" value="30" min="5" max="300" style="width:80px;margin-top:0.3rem;" />
+        </div>
+        <div id="mc-pts-row" style="display:none;">
+          <div class="mc-options-input">
+            <div class="mc-option-inp-wrap"><label>A</label><input type="text" id="mc-opt-a" placeholder="Option A" /></div>
+            <div class="mc-option-inp-wrap"><label>B</label><input type="text" id="mc-opt-b" placeholder="Option B" /></div>
+            <div class="mc-option-inp-wrap"><label>C</label><input type="text" id="mc-opt-c" placeholder="Option C" /></div>
+            <div class="mc-option-inp-wrap"><label>D</label><input type="text" id="mc-opt-d" placeholder="Option D" /></div>
+          </div>
+          <div class="points-row" style="margin-top:0.3rem;">
+            <label style="margin:0;">✅ Punkte richtige Antwort:</label>
+            <input type="number" id="pts-mc-game" value="3" min="1" style="width:65px;margin:0;" />
+          </div>
         </div>
 
         <div class="btn-row">
@@ -432,6 +565,38 @@
         <div id="reveal-result"></div>
       </div>
     </div>
+
+    <!-- Timed area -->
+    <div id="player-timed-area" style="display:none;">
+      <div class="pq-timed-label">⏱️ Auf Zeit</div>
+      <div class="pq-text" id="player-timed-q-text"></div>
+      <div class="timer-bar-wrap" style="margin-top:0.8rem;"><div class="timer-bar" id="player-timer-bar" style="width:100%"></div></div>
+      <div class="timer-display" id="player-timer-display" style="font-size:1.5rem;margin-top:0.3rem;">--</div>
+      <div class="timed-input-area" id="timed-input-area">
+        <input type="text" id="player-timed-input" placeholder="Deine Antwort..." />
+        <button class="btn" style="background:var(--timed);color:#000;max-width:240px;" onclick="submitTimed()">Abschicken ⚡</button>
+      </div>
+      <div class="timed-submitted" id="timed-submitted-msg" style="display:none;">✅ Antwort eingegangen!</div>
+      <div class="timed-reveal" id="timed-reveal" style="display:none;">
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Deine Antwort</div>
+        <div class="your-timed-val" id="reveal-timed-val">—</div>
+        <div id="reveal-timed-result"></div>
+      </div>
+    </div>
+
+    <!-- MC area -->
+    <div id="player-mc-area" style="display:none;">
+      <div class="pq-mc-label">🔤 Multiple Choice</div>
+      <div class="pq-text" id="player-mc-q-text"></div>
+      <div class="mc-choices" id="mc-choices">
+        <button class="mc-choice-btn" id="mc-btn-A" onclick="chooseMc('A')"><span class="mc-choice-letter">A</span><span class="mc-choice-text" id="mc-txt-A"></span></button>
+        <button class="mc-choice-btn" id="mc-btn-B" onclick="chooseMc('B')"><span class="mc-choice-letter">B</span><span class="mc-choice-text" id="mc-txt-B"></span></button>
+        <button class="mc-choice-btn" id="mc-btn-C" onclick="chooseMc('C')"><span class="mc-choice-letter">C</span><span class="mc-choice-text" id="mc-txt-C"></span></button>
+        <button class="mc-choice-btn" id="mc-btn-D" onclick="chooseMc('D')"><span class="mc-choice-letter">D</span><span class="mc-choice-text" id="mc-txt-D"></span></button>
+      </div>
+      <div class="mc-submitted" id="mc-submitted-msg" style="display:none;"></div>
+    </div>
+
   </div>
 
   <div class="buzz-result" id="buzz-result-msg"></div>
@@ -454,6 +619,15 @@ let estimateAnswers = {};
 let estimateWinners = [];
 let lastPlayers = {};
 let playerHasSubmitted = false;
+// Timed
+let timedAnswers = {};
+let timedTimerInterval = null;
+let timedEndTime = null;
+// MC
+let mcAnswers = {};
+let mcCorrectAnswer = null;
+let mcOptions = {};
+let playerMcChoice = null;
 
 // ══════════════════════════ FIREBASE ══════════════════════════
 function initFirebase() {
@@ -486,7 +660,10 @@ async function createRoom() {
     host: myName, ptsCorrect: ptsC, ptsWrong: ptsW, ptsEstimate: ptsE,
     question: '', questionVisible: false, questionType: 'buzz',
     buzzer: null, estimateOpen: false, estimateAnswers: null,
-    estimateCorrect: null, estimateWinners: null, players: {}
+    estimateCorrect: null, estimateWinners: null,
+    timedOpen: false, timedAnswers: null, timedEndTime: null, timedWinners: null,
+    mcOpen: false, mcAnswers: null, mcOptions: null, mcCorrect: null, mcWinners: null,
+    players: {}
   });
   document.getElementById('pts-correct-game').value = ptsC;
   document.getElementById('pts-wrong-game').value = ptsW;
@@ -511,10 +688,14 @@ async function joinRoom() {
 // ══════════════════════════ HOST LOGIC ══════════════════════════
 function setQType(type) {
   currentQType = type;
-  document.getElementById('type-buzz-btn').className = 'q-type-btn' + (type==='buzz' ? ' active-buzz' : '');
-  document.getElementById('type-est-btn').className  = 'q-type-btn' + (type==='estimate' ? ' active-est' : '');
-  document.getElementById('buzz-pts-row').style.display = type==='buzz' ? 'flex' : 'none';
-  document.getElementById('est-pts-row').style.display  = type==='estimate' ? 'flex' : 'none';
+  document.getElementById('type-buzz-btn').className  = 'q-type-btn' + (type==='buzz'     ? ' active-buzz'  : '');
+  document.getElementById('type-est-btn').className   = 'q-type-btn' + (type==='estimate' ? ' active-est'   : '');
+  document.getElementById('type-timed-btn').className = 'q-type-btn' + (type==='timed'    ? ' active-timed' : '');
+  document.getElementById('type-mc-btn').className    = 'q-type-btn' + (type==='mc'       ? ' active-mc'    : '');
+  document.getElementById('buzz-pts-row').style.display  = type==='buzz'     ? 'flex'  : 'none';
+  document.getElementById('est-pts-row').style.display   = type==='estimate' ? 'flex'  : 'none';
+  document.getElementById('timed-pts-row').style.display = type==='timed'    ? 'block' : 'none';
+  document.getElementById('mc-pts-row').style.display    = type==='mc'       ? 'block' : 'none';
 }
 
 function showGameScreen() {
@@ -549,11 +730,13 @@ function showGameScreen() {
     // Question display
     const qBox  = document.getElementById('current-question-display');
     const hqBox = document.getElementById('host-question-box');
-    const badge = room.questionType === 'estimate' ? ' <span class="q-mode-badge">Schätzfrage</span>' : '';
+    const badgeMap = {estimate:'Schätzfrage', timed:'Auf Zeit', mc:'A/B/C/D'};
+    const badge = badgeMap[room.questionType] ? ` <span class="q-mode-badge">${badgeMap[room.questionType]}</span>` : '';
     if (room.question) {
       if (room.questionVisible) {
         qBox.innerHTML = escHtml(room.question) + badge;
-        hqBox.className = 'question-box' + (room.questionType==='estimate' ? ' est-mode' : '');
+        const modeClass = {estimate:' est-mode', timed:' timed-mode', mc:' mc-mode'}[room.questionType] || '';
+        hqBox.className = 'question-box' + modeClass;
       } else {
         qBox.innerHTML = `<span style="color:var(--accent)">🔒 Bereit (versteckt)${badge}</span><br><span style="color:var(--muted);font-size:1rem;">${escHtml(room.question)}</span>`;
         hqBox.className = 'question-box';
@@ -571,6 +754,29 @@ function showGameScreen() {
       document.getElementById('est-count-num').textContent = Object.keys(estimateAnswers).length;
       renderEstimateAnswers(false);
     }
+
+    // Timed answers live update
+    if (room.timedOpen) {
+      document.getElementById('timed-panel').classList.add('active');
+      timedAnswers = room.timedAnswers || {};
+      document.getElementById('timed-count-num').textContent = Object.keys(timedAnswers).length;
+      document.getElementById('timed-count-total').textContent = Object.keys(lastPlayers).length;
+      renderTimedAnswers();
+      // Timer bar
+      if (room.timedEndTime && !timedTimerInterval) startHostTimer(room.timedEndTime);
+    } else if (!room.timedOpen && document.getElementById('timed-panel').classList.contains('active')) {
+      // keep panel open for judging
+    }
+
+    // MC answers live update
+    if (room.mcOpen) {
+      document.getElementById('mc-panel').classList.add('active');
+      mcAnswers = room.mcAnswers || {};
+      mcOptions = room.mcOptions || {};
+      document.getElementById('mc-count-num').textContent = Object.keys(mcAnswers).length;
+      document.getElementById('mc-count-total').textContent = Object.keys(lastPlayers).length;
+      renderMcResults();
+    }
   });
 }
 
@@ -578,28 +784,62 @@ function sendQuestion(visible) {
   const q = document.getElementById('new-question').value.trim();
   if (!q) { showToast('Bitte Frage eingeben!'); return; }
   currentQuestion = q;
-  const isEst = currentQType === 'estimate';
+  const isEst   = currentQType === 'estimate';
+  const isTimed = currentQType === 'timed';
+  const isMc    = currentQType === 'mc';
+
+  // Build timed end time
+  const timedSecs = isTimed ? (+document.getElementById('timed-limit').value || 30) : null;
+  const endTime   = (visible && isTimed) ? (Date.now() + timedSecs * 1000) : null;
+
+  // Build MC options
+  const opts = isMc ? {
+    A: document.getElementById('mc-opt-a').value.trim(),
+    B: document.getElementById('mc-opt-b').value.trim(),
+    C: document.getElementById('mc-opt-c').value.trim(),
+    D: document.getElementById('mc-opt-d').value.trim()
+  } : null;
+  if (isMc && (!opts.A || !opts.B)) { showToast('Bitte mind. A und B ausfüllen!'); return; }
 
   db.ref(`rooms/${roomCode}`).update({
     question: q, questionVisible: visible, questionType: currentQType,
     buzzer: null,
     estimateOpen: visible && isEst,
-    estimateAnswers: null, estimateCorrect: null, estimateWinners: null
+    estimateAnswers: null, estimateCorrect: null, estimateWinners: null,
+    timedOpen: visible && isTimed, timedAnswers: null, timedEndTime: endTime, timedWinners: null,
+    mcOpen: visible && isMc, mcAnswers: null, mcOptions: opts, mcCorrect: null, mcWinners: null
   });
+
+  // Reset host panels
+  ['estimate-panel','timed-panel','mc-panel'].forEach(id => document.getElementById(id).classList.remove('active'));
+  clearHostTimer();
 
   if (visible) {
     if (isEst) {
-      estimateAnswers = {};
-      estimateWinners = [];
+      estimateAnswers = {}; estimateWinners = [];
       document.getElementById('estimate-panel').classList.add('active');
       renderEstimateAnswers(false);
-      showToast('Schätzfrage freigegeben! Spieler können antworten.');
+      showToast('Schätzfrage freigegeben!');
+    } else if (isTimed) {
+      timedAnswers = {};
+      document.getElementById('timed-panel').classList.add('active');
+      document.getElementById('timed-count-num').textContent = '0';
+      document.getElementById('timed-answers-list').innerHTML = '<div class="est-waiting">Warte auf Antworten...</div>';
+      startHostTimer(endTime);
+      showToast(\`Zeitfrage freigegeben! \${timedSecs}s\`);
+    } else if (isMc) {
+      mcAnswers = {}; mcOptions = opts; mcCorrectAnswer = null;
+      document.getElementById('mc-panel').classList.add('active');
+      document.getElementById('mc-count-num').textContent = '0';
+      document.getElementById('mc-award-row').style.display = 'none';
+      // reset judge buttons
+      document.querySelectorAll('.mc-judge-btn').forEach(b => b.classList.remove('selected-correct'));
+      renderMcResults();
+      showToast('Multiple Choice freigegeben!');
     } else {
-      document.getElementById('estimate-panel').classList.remove('active');
       showToast('Frage freigegeben! Buzzer aktiv.');
     }
   } else {
-    document.getElementById('estimate-panel').classList.remove('active');
     showToast('Frage vorbereitet (versteckt).');
   }
 }
@@ -629,6 +869,172 @@ function toggleEstimateWinner(pid) {
   if (idx === -1) estimateWinners.push(pid);
   else estimateWinners.splice(idx, 1);
   renderEstimateAnswers(false);
+}
+
+
+// ══════════════════════════ TIMED HOST ══════════════════════════
+function startHostTimer(endTime) {
+  clearHostTimer();
+  timedEndTime = endTime;
+  function tick() {
+    const remaining = Math.max(0, Math.ceil((timedEndTime - Date.now()) / 1000));
+    const total = Math.ceil((timedEndTime - (Date.now() - (timedEndTime - Date.now()))) / 1000); // approx
+    document.getElementById('host-timer-display').textContent = remaining + 's';
+    const pct = Math.max(0, (remaining / (+document.getElementById('timed-limit')?.value || 30)) * 100);
+    const bar = document.getElementById('host-timer-bar');
+    if (bar) {
+      bar.style.width = pct + '%';
+      bar.style.background = pct > 50 ? 'var(--timed)' : pct > 20 ? 'var(--accent)' : 'var(--red)';
+    }
+    if (remaining <= 0) { clearHostTimer(); document.getElementById('host-timer-display').textContent = '⏰'; }
+  }
+  tick();
+  timedTimerInterval = setInterval(tick, 500);
+}
+
+function clearHostTimer() {
+  if (timedTimerInterval) { clearInterval(timedTimerInterval); timedTimerInterval = null; }
+}
+
+function renderTimedAnswers() {
+  const list = document.getElementById('timed-answers-list');
+  const entries = Object.entries(timedAnswers);
+  if (!entries.length) { list.innerHTML = '<div class="est-waiting">Warte auf Antworten...</div>'; return; }
+  entries.sort((a,b) => a[1].ts - b[1].ts); // sort by time
+  const ptsList = [
+    +document.getElementById('pts-t1').value || 5,
+    +document.getElementById('pts-t2').value || 4,
+    +document.getElementById('pts-t3').value || 3,
+    +document.getElementById('pts-t4').value || 1
+  ];
+  list.innerHTML = entries.map(([pid, ans], i) => {
+    const pts = ptsList[Math.min(i, ptsList.length-1)];
+    const timeAgo = ((ans.ts - (timedEndTime - (+document.getElementById('timed-limit')?.value||30)*1000)) / 1000).toFixed(1);
+    return `<div class="timed-answer-row" id="trow_${pid.replace(/[^a-z0-9]/gi,'_')}">
+      <span class="timed-answer-rank">#${i+1}</span>
+      <span class="timed-answer-name">${escHtml(ans.name)}</span>
+      <span class="timed-answer-val">${escHtml(ans.value)} &bull; ${timeAgo}s</span>
+      <span class="timed-answer-pts">+${pts}</span>
+    </div>`;
+  }).join('');
+}
+
+async function awardTimed() {
+  // Ask host to mark correct answers by clicking rows
+  const entries = Object.entries(timedAnswers).sort((a,b) => a[1].ts - b[1].ts);
+  if (!entries.length) { showToast('Keine Antworten eingegangen.'); return; }
+
+  // Toggle correct/wrong on click
+  const rows = document.querySelectorAll('#timed-answers-list .timed-answer-row');
+  if (!window._timedJudging) {
+    window._timedJudging = true;
+    showToast('Klicke richtige Antworten an, dann nochmal "Vergeben"');
+    rows.forEach((row, i) => {
+      row.style.cursor = 'pointer';
+      row.onclick = () => row.classList.toggle('correct');
+    });
+    return;
+  }
+
+  // Actually award
+  const ptsList = [
+    +document.getElementById('pts-t1').value || 5,
+    +document.getElementById('pts-t2').value || 4,
+    +document.getElementById('pts-t3').value || 3,
+    +document.getElementById('pts-t4').value || 1
+  ];
+  const snap = await db.ref(`rooms/${roomCode}/players`).once('value');
+  const players = snap.val() || {};
+  const updates = {};
+  const winners = [];
+  let rank = 0;
+  rows.forEach((row, i) => {
+    if (row.classList.contains('correct')) {
+      const pid = entries[i][0];
+      const pts = ptsList[Math.min(rank, ptsList.length-1)];
+      if (players[pid]) updates[`rooms/${roomCode}/players/${pid}/score`] = (players[pid].score||0) + pts;
+      winners.push(pid);
+      rank++;
+    } else {
+      row.classList.add('wrong');
+    }
+  });
+  if (Object.keys(updates).length) await db.ref().update(updates);
+
+  const names = winners.map(pid => timedAnswers[pid]?.name||pid).join(', ');
+  showToast(names ? `🏆 Punkte vergeben an: ${names}` : 'Keine richtigen Antworten.');
+
+  await db.ref(`rooms/${roomCode}`).update({
+    timedOpen: false, timedWinners: winners,
+    question: '', questionVisible: false
+  });
+  clearHostTimer();
+  document.getElementById('timed-panel').classList.remove('active');
+  window._timedJudging = false;
+}
+
+async function closeTimed() {
+  clearHostTimer();
+  await db.ref(`rooms/${roomCode}`).update({ timedOpen: false, question: '', questionVisible: false });
+  document.getElementById('timed-panel').classList.remove('active');
+  window._timedJudging = false;
+}
+
+// ══════════════════════════ MC HOST ══════════════════════════
+function renderMcResults() {
+  const list = document.getElementById('mc-results-list');
+  const letters = ['A','B','C','D'];
+  const grouped = {};
+  letters.forEach(l => grouped[l] = []);
+  Object.entries(mcAnswers).forEach(([pid, ans]) => {
+    if (grouped[ans.choice] !== undefined) grouped[ans.choice].push(ans.name);
+  });
+  list.innerHTML = letters.filter(l => mcOptions[l]).map(l => {
+    const names = grouped[l];
+    const isWinner = mcCorrectAnswer === l;
+    return `<div class="mc-result-row ${isWinner ? 'winner-opt' : ''}">
+      <span class="mc-result-letter">${l}</span>
+      <span class="mc-result-count">${names.length}×</span>
+      <span class="mc-result-names">${escHtml(mcOptions[l])} ${names.length ? '– ' + names.map(escHtml).join(', ') : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectMcCorrect(letter) {
+  mcCorrectAnswer = letter;
+  document.querySelectorAll('.mc-judge-btn').forEach(b => {
+    b.classList.toggle('selected-correct', b.textContent === letter);
+  });
+  renderMcResults();
+  document.getElementById('mc-award-row').style.display = 'flex';
+}
+
+async function awardMc() {
+  if (!mcCorrectAnswer) { showToast('Bitte zuerst richtige Antwort auswählen!'); return; }
+  const pts = +document.getElementById('pts-mc-game').value || 3;
+  const snap = await db.ref(`rooms/${roomCode}/players`).once('value');
+  const players = snap.val() || {};
+  const updates = {};
+  const winners = [];
+  Object.entries(mcAnswers).forEach(([pid, ans]) => {
+    if (ans.choice === mcCorrectAnswer && players[pid]) {
+      updates[`rooms/${roomCode}/players/${pid}/score`] = (players[pid].score||0) + pts;
+      winners.push(pid);
+    }
+  });
+  if (Object.keys(updates).length) await db.ref().update(updates);
+  const names = winners.map(pid => mcAnswers[pid]?.name||pid).join(', ');
+  showToast(names ? `✅ ${names} – je ${pts} Punkte!` : 'Niemand hatte die richtige Antwort.');
+  await db.ref(`rooms/${roomCode}`).update({
+    mcOpen: false, mcCorrect: mcCorrectAnswer, mcWinners: winners,
+    question: '', questionVisible: false
+  });
+  document.getElementById('mc-panel').classList.remove('active');
+}
+
+async function closeMc() {
+  await db.ref(`rooms/${roomCode}`).update({ mcOpen: false, question: '', questionVisible: false });
+  document.getElementById('mc-panel').classList.remove('active');
 }
 
 async function awardEstimate() {
@@ -792,8 +1198,88 @@ function showPlayerScreen() {
           playerHasSubmitted = false;
         }
 
+      } else if (room.questionType === 'timed') {
+        // ── TIMED MODE ──
+        estArea.style.display = 'none';
+        buzzArea.style.display = 'none';
+        buzzWrap.style.display = 'none';
+        pqBox.className = 'player-question-box timed-mode';
+        const timedArea = document.getElementById('player-timed-area');
+        const mcArea    = document.getElementById('player-mc-area');
+        timedArea.style.display = 'block';
+        mcArea.style.display = 'none';
+        document.getElementById('player-timed-q-text').textContent = room.question;
+        // timer
+        if (room.timedEndTime) startPlayerTimer(room.timedEndTime);
+        const timedInput  = document.getElementById('timed-input-area');
+        const timedSubMsg = document.getElementById('timed-submitted-msg');
+        const timedRev    = document.getElementById('timed-reveal');
+        if (room.timedOpen) {
+          timedRev.style.display = 'none';
+          if (playerHasSubmitted) { timedInput.style.display='none'; timedSubMsg.style.display='block'; }
+          else                    { timedInput.style.display='flex'; timedSubMsg.style.display='none'; }
+        } else if (room.timedWinners) {
+          timedInput.style.display='none'; timedSubMsg.style.display='none'; timedRev.style.display='block';
+          const myAns = room.timedAnswers && room.timedAnswers[myPlayerId];
+          document.getElementById('reveal-timed-val').textContent = myAns ? myAns.value : '—';
+          const isW = room.timedWinners.includes(myPlayerId);
+          document.getElementById('reveal-timed-result').innerHTML = isW
+            ? '<div class="result-win">🏆 Richtig &amp; Punkte erhalten!</div>'
+            : `<div class="result-lose">${myAns ? 'Falsch oder kein Punkt.' : 'Keine Antwort.'}</div>`;
+          clearPlayerTimer(); playerHasSubmitted = false;
+        }
+
+      } else if (room.questionType === 'mc') {
+        // ── MC MODE ──
+        estArea.style.display = 'none';
+        buzzArea.style.display = 'none';
+        buzzWrap.style.display = 'none';
+        pqBox.className = 'player-question-box mc-mode';
+        const timedArea = document.getElementById('player-timed-area');
+        const mcArea    = document.getElementById('player-mc-area');
+        timedArea.style.display = 'none';
+        mcArea.style.display = 'block';
+        document.getElementById('player-mc-q-text').textContent = room.question;
+        // Fill option texts
+        const opts = room.mcOptions || {};
+        ['A','B','C','D'].forEach(l => {
+          const txt = document.getElementById('mc-txt-'+l);
+          const btn = document.getElementById('mc-btn-'+l);
+          if (opts[l]) { txt.textContent = opts[l]; btn.style.display='flex'; }
+          else         { btn.style.display='none'; }
+        });
+        const submittedMc = document.getElementById('mc-submitted-msg');
+        if (room.mcOpen) {
+          // Enable buttons if not yet chosen
+          ['A','B','C','D'].forEach(l => {
+            const btn = document.getElementById('mc-btn-'+l);
+            if (btn) btn.disabled = !!playerMcChoice;
+            if (btn && playerMcChoice === l) btn.className = 'mc-choice-btn chosen';
+          });
+          if (playerMcChoice) { submittedMc.style.display='block'; submittedMc.textContent = `Du hast ${playerMcChoice} gewählt!`; }
+          else                { submittedMc.style.display='none'; }
+        } else if (room.mcCorrect) {
+          // Reveal
+          ['A','B','C','D'].forEach(l => {
+            const btn = document.getElementById('mc-btn-'+l);
+            if (!btn) return;
+            btn.disabled = true;
+            if (l === room.mcCorrect) btn.className = 'mc-choice-btn correct-reveal';
+            else if (l === playerMcChoice) btn.className = 'mc-choice-btn wrong-reveal';
+            else btn.className = 'mc-choice-btn';
+          });
+          const isW = room.mcWinners && room.mcWinners.includes(myPlayerId);
+          submittedMc.style.display = 'block';
+          submittedMc.textContent = isW ? '🏆 Richtig! Punkte erhalten!' : (playerMcChoice ? `Falsch. Richtig war: ${room.mcCorrect}` : 'Keine Antwort abgegeben.');
+          playerMcChoice = null;
+        }
+
       } else {
         // ── BUZZ MODE ──
+        const timedArea = document.getElementById('player-timed-area');
+        const mcArea    = document.getElementById('player-mc-area');
+        if (timedArea) { timedArea.style.display='none'; clearPlayerTimer(); }
+        if (mcArea)    mcArea.style.display='none';
         estArea.style.display = 'none';
         buzzArea.style.display = 'block';
         buzzWrap.style.display = 'block';
@@ -810,6 +1296,10 @@ function showPlayerScreen() {
       buzzWrap.style.display = 'block';
       buzzBtn.disabled = true;
       playerHasSubmitted = false;
+      const ta1 = document.getElementById('player-timed-area');
+      const ma1 = document.getElementById('player-mc-area');
+      if (ta1) ta1.style.display='none';
+      if (ma1) ma1.style.display='none';
     } else {
       waitMsg.style.display = 'block';
       waitMsg.textContent = 'Warte auf den Moderator...';
@@ -819,6 +1309,12 @@ function showPlayerScreen() {
       buzzBtn.disabled = true;
       pqBox.className = 'player-question-box';
       playerHasSubmitted = false;
+      playerMcChoice = null;
+      clearPlayerTimer();
+      const ta2 = document.getElementById('player-timed-area');
+      const ma2 = document.getElementById('player-mc-area');
+      if (ta2) ta2.style.display='none';
+      if (ma2) ma2.style.display='none';
     }
 
     // Buzzer feedback
@@ -872,6 +1368,67 @@ async function submitEstimate() {
   document.getElementById('est-input-area').style.display = 'none';
   document.getElementById('est-submitted-msg').style.display = 'block';
   showToast('✅ Antwort abgeschickt!');
+}
+
+
+// ══════════════════════════ PLAYER TIMED + MC ══════════════════════════
+let playerTimerInterval = null;
+
+function startPlayerTimer(endTime) {
+  clearPlayerTimer();
+  const limitEl = null; // we use endTime directly
+  function tick() {
+    const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    const el = document.getElementById('player-timer-display');
+    const bar = document.getElementById('player-timer-bar');
+    if (el) el.textContent = remaining + 's';
+    // We don't know original limit from player side precisely, approximate from remaining
+    if (bar) {
+      // get rough pct from a max of 300s
+      bar.style.background = remaining > 15 ? 'var(--timed)' : remaining > 5 ? 'var(--accent)' : 'var(--red)';
+    }
+    if (remaining <= 0) { clearPlayerTimer(); if(el) el.textContent='⏰'; }
+  }
+  tick();
+  playerTimerInterval = setInterval(tick, 500);
+}
+
+function clearPlayerTimer() {
+  if (playerTimerInterval) { clearInterval(playerTimerInterval); playerTimerInterval = null; }
+}
+
+async function submitTimed() {
+  const raw = document.getElementById('player-timed-input').value.trim();
+  if (!raw) { showToast('Bitte eine Antwort eingeben!'); return; }
+  const snap = await db.ref(`rooms/${roomCode}/timedOpen`).once('value');
+  if (!snap.val()) { showToast('Zeit abgelaufen!'); return; }
+  await db.ref(`rooms/${roomCode}/timedAnswers/${myPlayerId}`).set({
+    name: myName, value: raw, ts: Date.now()
+  });
+  playerHasSubmitted = true;
+  document.getElementById('timed-input-area').style.display = 'none';
+  document.getElementById('timed-submitted-msg').style.display = 'block';
+  showToast('✅ Antwort abgeschickt!');
+}
+
+async function chooseMc(letter) {
+  if (playerMcChoice) return; // already chosen
+  const snap = await db.ref(`rooms/${roomCode}/mcOpen`).once('value');
+  if (!snap.val()) { showToast('Abstimmung beendet.'); return; }
+  playerMcChoice = letter;
+  await db.ref(`rooms/${roomCode}/mcAnswers/${myPlayerId}`).set({
+    name: myName, choice: letter
+  });
+  // Visual feedback
+  ['A','B','C','D'].forEach(l => {
+    const btn = document.getElementById('mc-btn-'+l);
+    if (!btn) return;
+    btn.disabled = true;
+    if (l === letter) btn.className = 'mc-choice-btn chosen';
+  });
+  const sub = document.getElementById('mc-submitted-msg');
+  sub.style.display = 'block';
+  sub.textContent = `Du hast ${letter} gewählt!`;
 }
 
 // ══════════════════════════ HELPERS ══════════════════════════
